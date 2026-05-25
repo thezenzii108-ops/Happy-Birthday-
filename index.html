@@ -533,11 +533,67 @@
 </footer>
 
 <script>
+// ── Audio Context for Birthday Song
+let audioContext = null;
+let songPlaying = false;
+
+function initAudioContext() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+// Play birthday song using Web Audio API
+function playBirthdaySong() {
+  initAudioContext();
+  
+  if (songPlaying) return;
+  songPlaying = true;
+  
+  const notes = [
+    {freq: 262, duration: 0.5}, // C4
+    {freq: 262, duration: 0.5}, // C4
+    {freq: 294, duration: 1},   // D4
+    {freq: 262, duration: 1},   // C4
+    {freq: 349, duration: 1},   // F4
+    {freq: 330, duration: 2},   // E4
+    {freq: 262, duration: 0.5}, // C4
+    {freq: 262, duration: 0.5}, // C4
+    {freq: 294, duration: 1},   // D4
+    {freq: 262, duration: 1},   // C4
+    {freq: 392, duration: 1},   // G4
+    {freq: 349, duration: 2},   // F4
+  ];
+  
+  let currentTime = audioContext.currentTime;
+  
+  notes.forEach(note => {
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    
+    osc.frequency.value = note.freq;
+    osc.type = 'sine';
+    
+    gain.gain.setValueAtTime(0.3, currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, currentTime + note.duration);
+    
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    
+    osc.start(currentTime);
+    osc.stop(currentTime + note.duration);
+    
+    currentTime += note.duration;
+  });
+  
+  setTimeout(() => { songPlaying = false; }, (currentTime - audioContext.currentTime) * 1000);
+}
+
 // ── Stars & shooting stars
 const sky=document.getElementById('sky');
 for(let i=0;i<150;i++){
   const s=document.createElement('div');s.className='st';
-  s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${.5+Math.random()*2.5}px;height:${.5+Math.random()*2.5}px;animation-duration:${1+Math.random()*3.5}s;animation-delay:${Math.random()*7}s`;
+  s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${.5+Math.random()*2.5}px;height:${.5+Math.random()*2.5}px;animation-duration:${1+Math.random()*3.5}s;animation-delay:${Math.random()*3}s`;
   sky.appendChild(s);
 }
 for(let i=0;i<6;i++){
@@ -562,6 +618,12 @@ let blown=0;const total=5;
 const msgs=['4 more to go… 🌬️','3 still glowing… ✨','Halfway there! 💨','Almost… one last one! 🕯️',"You did it! 🎉 Arfeen's wish is sent to the stars! 💜"];
 function blowNext(){
   if(blown>=total)return;
+  
+  // Play birthday song on first candle blow
+  if(blown === 0) {
+    playBirthdaySong();
+  }
+  
   const idx=blown;
   document.getElementById('fl'+idx).classList.add('blown');
   document.getElementById('ifl'+idx).classList.add('blown');
@@ -578,6 +640,7 @@ function relightCandles(){
     document.getElementById('ifl'+i).classList.remove('blown');
   }
   blown=0;
+  songPlaying = false;
   document.getElementById('blowStatus').textContent='';
   document.getElementById('relightBtn').classList.remove('show');
 }
@@ -641,7 +704,7 @@ function confetti(n){
   const c=['#e879f9','#a78bfa','#f5c842','#f9a8d4','#67e8f9','#fb7185','#fff','#34d399'];
   for(let i=0;i<n;i++){
     const el=document.createElement('div');el.className='conf';
-    el.style.cssText=`left:${10+Math.random()*80}vw;top:30vh;width:${5+Math.random()*8}px;height:${5+Math.random()*8}px;background:${c[~~(Math.random()*c.length)]};border-radius:${Math.random()>.5?'50%':'3px'};animation-duration:${1.4+Math.random()*2.2}s;animation-delay:${Math.random()*.5}s`;
+    el.style.cssText=`left:${10+Math.random()*80}vw;top:30vh;width:${5+Math.random()*8}px;height:${5+Math.random()*8}px;background:${c[~~(Math.random()*c.length)]};border-radius:${Math.random()>.5?'50%':'0'}`;
     document.body.appendChild(el);setTimeout(()=>el.remove(),5000);
   }
 }
